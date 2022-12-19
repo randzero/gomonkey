@@ -1,10 +1,20 @@
 package gomonkey
 
-import "syscall"
+import (
+	"runtime"
+	"strings"
+	"syscall"
+)
 
 func modifyBinary(target uintptr, bytes []byte) {
 	function := entryAddress(target, len(bytes))
-	err := mprotectCrossPage(target, len(bytes), syscall.PROT_READ|syscall.PROT_WRITE|syscall.PROT_EXEC)
+	goos := runtime.GOOS
+	var err error
+	if strings.Contains(goos, "darwin") {
+		err = mprotectCrossPage(target, len(bytes), syscall.PROT_READ|syscall.PROT_WRITE)
+	} else {
+		err = mprotectCrossPage(target, len(bytes), syscall.PROT_READ|syscall.PROT_WRITE|syscall.PROT_EXEC)
+	}
 	if err != nil {
 		panic(err)
 	}
